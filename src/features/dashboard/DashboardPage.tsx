@@ -1,58 +1,36 @@
+import React from "react";
 import { Link } from "react-router-dom";
+import { GAMES } from "../../gameRegistry";
 
-const games = [
-  {
-    id: "hangman",
-    title: "Hangman",
-    icon: "🪓",
-    description: "Rescue the hero by guessing the secret word before the time runs out.",
-    path: "/hangman",
-    difficulty: "Medium",
-    color: "#3b82f6"
-  },
-  {
-    id: "pacman",
-    title: "Pacman Lite",
-    icon: "🟡",
-    description: "Classic arcade action! Dodge the ghosts and clear the maze of pellets.",
-    path: "/pacman",
-    difficulty: "Hard",
-    color: "#facc15"
-  },
-  {
-    id: "imposter",
-    title: "Imposter",
-    icon: "🕵️‍♂️",
-    description: "Find the odd one out in this social deduction game. Perfect for parties!",
-    path: "/imposter",
-    difficulty: "Party",
-    color: "#ef4444"
-  },
-];
+interface Props {
+  hiddenGames?: string[];
+}
 
-function DashboardPage() {
+function DashboardPage({ hiddenGames = [] }: Props) {
+  const visibleGames = GAMES.filter((g) => !hiddenGames.includes(g.id));
   return (
     <section className="dashboard-view">
       <div className="hero-premium">
         <div className="hero-content">
           <h1>Arcade Universe</h1>
-          <p>Experience the ultimate collection of classic and social games.</p>
+          <p>Experience the ultimate collection of classic and social games — play anywhere, on any device.</p>
           <div className="hero-stats">
-            <div className="stat"><span>3</span> Games</div>
+            <div className="stat"><span>{GAMES.length}</span> Games</div>
+            <div className="stat"><span>8</span> Categories</div>
             <div className="stat"><span>∞</span> Fun</div>
           </div>
         </div>
       </div>
       
       <div className="game-grid-premium">
-        {games.map((game) => (
-          <Link key={game.id} to={game.path} className="game-card-premium" style={{"--accent": game.color} as any}>
+        {visibleGames.map((game) => (
+          <Link key={game.id} to={game.path} className="game-card-premium" style={{"--accent": game.color} as React.CSSProperties}>
             <div className="card-top">
               <div className="game-icon">{game.icon}</div>
               <div className="game-badge">{game.difficulty}</div>
             </div>
             <div className="card-body">
-              <h3>{game.title}</h3>
+              <h3>{game.label}</h3>
               <p>{game.description}</p>
             </div>
             <div className="card-footer">
@@ -67,3 +45,4 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+

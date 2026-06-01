@@ -12,7 +12,7 @@ function GameLayout({ title, subtitle, stats, actions, children }: GameLayoutPro
   return (
     <section className="game-layout">
       <div className="game-layout-head">
-        <div>
+        <div className="game-layout-title">
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
@@ -25,3 +25,4 @@ function GameLayout({ title, subtitle, stats, actions, children }: GameLayoutPro
 }
 
 export default GameLayout;
+

@@ -3,6 +3,82 @@ import GameLayout from "../../components/GameLayout";
 import { HANGMAN_CATEGORIES, HANGMAN_WORDS, HangmanDifficulty, HangmanWordEntry } from "./words";
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
+
+function HangmanDrawing({
+  wrongCount,
+  maxWrong,
+  isLost,
+  isWon,
+  shaking,
+}: {
+  wrongCount: number;
+  maxWrong: number;
+  isLost: boolean;
+  isWon: boolean;
+  shaking: boolean;
+}) {
+  const show = (n: number) => wrongCount >= n;
+  const danger = Math.min(1, wrongCount / maxWrong);
+  const stroke = isLost ? "#f87171" : isWon ? "#4ade80" : "#60a5fa";
+
+  return (
+    <div className={`hangman-drawing${shaking ? " hangman-shake" : ""}`} role="img" aria-label={`Hangman figure: ${wrongCount} wrong guesses`}>
+      <svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        {/* Gallows */}
+        <line x1="20" y1="195" x2="180" y2="195" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="195" x2="60" y2="15" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="15" x2="140" y2="15" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
+        <line x1="60" y1="42" x2="88" y2="15" stroke="#334155" strokeWidth="3" strokeLinecap="round" />
+        <line x1="140" y1="15" x2="140" y2="45" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+
+        {/* Head */}
+        {show(1) && <circle cx="140" cy="61" r="15" fill="none" stroke={stroke} strokeWidth="3" className="hm-part" />}
+
+        {/* Body */}
+        {show(2) && <line x1="140" y1="76" x2="140" y2="128" stroke={stroke} strokeWidth="3" strokeLinecap="round" className="hm-part" />}
+
+        {/* Left arm */}
+        {show(3) && <line x1="140" y1="93" x2="110" y2="116" stroke={stroke} strokeWidth="3" strokeLinecap="round" className="hm-part" />}
+
+        {/* Right arm */}
+        {show(4) && <line x1="140" y1="93" x2="170" y2="116" stroke={stroke} strokeWidth="3" strokeLinecap="round" className="hm-part" />}
+
+        {/* Left leg */}
+        {show(5) && <line x1="140" y1="128" x2="112" y2="165" stroke={stroke} strokeWidth="3" strokeLinecap="round" className="hm-part" />}
+
+        {/* Right leg */}
+        {show(6) && <line x1="140" y1="128" x2="168" y2="165" stroke={stroke} strokeWidth="3" strokeLinecap="round" className="hm-part" />}
+
+        {/* Lost: X eyes + frown */}
+        {isLost && (
+          <g className="hm-part">
+            <line x1="133" y1="54" x2="139" y2="60" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="139" y1="54" x2="133" y2="60" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="141" y1="54" x2="147" y2="60" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="147" y1="54" x2="141" y2="60" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M133 67 Q140 63 147 67" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
+          </g>
+        )}
+
+        {/* Won: dot eyes + smile */}
+        {isWon && show(1) && !isLost && (
+          <g className="hm-part">
+            <circle cx="135" cy="57" r="2.5" fill="#4ade80" />
+            <circle cx="145" cy="57" r="2.5" fill="#4ade80" />
+            <path d="M133 64 Q140 70 147 64" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
+          </g>
+        )}
+      </svg>
+
+      <div className="hangman-danger-bar">
+        <div className="hangman-danger-fill" style={{ width: `${danger * 100}%` }} />
+      </div>
+      <p className="hangman-danger-label">
+        {isLost ? "Out of guesses!" : isWon ? "You got it!" : `${wrongCount} / ${maxWrong} wrong`}
+      </p>
+    </div>
+  );
+}
 const defaultCategories = new Set<string>(["tech", "gaming"]);
 
 type HangmanSettings = {
@@ -45,10 +121,13 @@ function HangmanGame() {
   const [guesses, setGuesses] = useState<Set<string>>(new Set());
   const [streak, setStreak] = useState<number>(0);
   const [isSetupOpen, setIsSetupOpen] = useState<boolean>(false);
+  const [phase, setPhase] = useState<"idle" | "playing">("idle");
   const [categoryInput, setCategoryInput] = useState<string>("");
   const [wordInput, setWordInput] = useState<string>("");
   const [wordCategoryInput, setWordCategoryInput] = useState<string>("");
   const [dynamicCategories, setDynamicCategories] = useState<string[]>(HANGMAN_CATEGORIES);
+  const [lastGuessResult, setLastGuessResult] = useState<{ letter: string; correct: boolean } | null>(null);
+  const [setupTab, setSetupTab] = useState<"categories" | "words" | "rules">("categories");
 
   const wrongCount = useMemo(
     () => [...guesses].filter((letter) => !entry.value.includes(letter)).length,
@@ -61,10 +140,6 @@ function HangmanGame() {
   );
   const isLost = wrongCount >= settings.maxWrong;
   const isGameOver = isWon || isLost;
-  const dangerProgress = Math.min(1, wrongCount / settings.maxWrong);
-  const sceneStage = Math.min(5, Math.floor((wrongCount / settings.maxWrong) * 5));
-  const sceneImage = `/hangman/fall-${sceneStage}.svg`;
-
   const maskedWord = useMemo(
     () =>
       entry.value
@@ -77,10 +152,18 @@ function HangmanGame() {
   const onGuess = useCallback(
     (letter: string) => {
       if (isGameOver || guesses.has(letter)) return;
+      const isCorrect = entry.value.includes(letter);
       setGuesses((prev) => new Set(prev).add(letter));
+      setLastGuessResult({ letter, correct: isCorrect });
     },
-    [guesses, isGameOver],
+    [guesses, isGameOver, entry.value],
   );
+
+  useEffect(() => {
+    if (!lastGuessResult) return;
+    const timer = setTimeout(() => setLastGuessResult(null), 650);
+    return () => clearTimeout(timer);
+  }, [lastGuessResult]);
 
   useEffect(() => {
     const onKeydown = (event: KeyboardEvent) => {
@@ -179,207 +262,254 @@ function HangmanGame() {
         </>
       }
       actions={
-        <>
-          <button className="btn btn-secondary" onClick={() => setIsSetupOpen(true)}>
-            Setup
-          </button>
-          <button className="btn" onClick={restart}>
-            New word
-          </button>
-        </>
+        phase === "idle" ? null : (
+          <>
+            <button className="btn btn-secondary" onClick={() => setIsSetupOpen(true)}>Setup</button>
+            <button className="btn" onClick={restart}>New word</button>
+          </>
+        )
       }
     >
+      {/* Idle / pre-game screen */}
+      {phase === "idle" ? (
+        <section className="game-idle-view">
+          <div className="hero-icon">🪓</div>
+          <h3>Ready to play Hangman?</h3>
+          <p>Pick your categories, difficulty, and start guessing words before the figure is complete.</p>
+          <button className="btn btn-lg" onClick={() => setIsSetupOpen(true)}>Configure &amp; Play</button>
+        </section>
+      ) : null}
+
+      {/* Setup modal */}
       {isSetupOpen ? (
-        <div className="modal-backdrop" onClick={() => setIsSetupOpen(false)} role="presentation">
+        <div className="modal-backdrop" onClick={() => { if (phase !== "idle") setIsSetupOpen(false); }} role="presentation">
           <section
             className="setup-modal"
             aria-label="Hangman setup"
             onClick={(event) => event.stopPropagation()}
           >
+            {/* Header */}
             <div className="setup-modal-head">
-              <h3>Hangman Setup</h3>
-              <button className="btn btn-secondary" onClick={() => setIsSetupOpen(false)}>
-                Close
-              </button>
+              <h3>Game Setup</h3>
+              <button className="close-btn" onClick={() => setIsSetupOpen(false)} aria-label="Close setup">✕</button>
             </div>
-            <div className="settings-row">
-              <span className="settings-label">Categories</span>
-              <div className="settings-chips">
-                {dynamicCategories.map((category) => {
-                  const active = settings.selectedCategories.has(category);
-                  return (
-                    <div key={category} className="category-chip-wrap">
-                      <button
-                        className={`chip-btn ${active ? "chip-btn-active" : ""}`}
-                        onClick={() => toggleCategory(category)}
-                        type="button"
-                        aria-pressed={active}
-                      >
-                        {category}
-                      </button>
-                      {!HANGMAN_CATEGORIES.includes(category) ? (
-                        <button
-                          type="button"
-                          className="chip-remove-btn"
-                          aria-label={`Remove ${category} category`}
-                          onClick={() => removeCategory(category)}
-                        >
-                          x
-                        </button>
-                      ) : null}
+
+            {/* Tab bar */}
+            <div className="setup-tabs" role="tablist">
+              {(["categories", "words", "rules"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={setupTab === tab}
+                  className={`setup-tab-btn ${setupTab === tab ? "setup-tab-active" : ""}`}
+                  onClick={() => setSetupTab(tab)}
+                >
+                  {tab === "categories" ? "🏷 Categories" : tab === "words" ? "📝 Words" : "⚙ Rules"}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="setup-tab-content" role="tabpanel">
+
+              {/* CATEGORIES TAB */}
+              {setupTab === "categories" && (
+                <div className="setup-tab-pane">
+                  <p className="setup-hint">Tap to toggle. Words will be drawn from active categories.</p>
+                  <div className="settings-chips setup-chips-grid">
+                    {dynamicCategories.map((category) => {
+                      const active = settings.selectedCategories.has(category);
+                      return (
+                        <div key={category} className="category-chip-wrap">
+                          <button
+                            className={`chip-btn ${active ? "chip-btn-active" : ""}`}
+                            onClick={() => toggleCategory(category)}
+                            type="button"
+                            aria-pressed={active}
+                          >
+                            {category}
+                          </button>
+                          {!HANGMAN_CATEGORIES.includes(category) ? (
+                            <button
+                              type="button"
+                              className="chip-remove-btn"
+                              aria-label={`Remove ${category}`}
+                              onClick={() => removeCategory(category)}
+                            >
+                              ✕
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="setup-add-row">
+                    <input
+                      id="addCategoryInput"
+                      className="setting-input"
+                      value={categoryInput}
+                      onChange={(event) => setCategoryInput(event.target.value)}
+                      onKeyDown={(event) => { if (event.key === "Enter") addCategory(); }}
+                      placeholder="New category (e.g. mythology)"
+                    />
+                    <button className="btn btn-secondary" type="button" onClick={addCategory}>Add</button>
+                  </div>
+                </div>
+              )}
+
+              {/* WORDS TAB */}
+              {setupTab === "words" && (
+                <div className="setup-tab-pane">
+                  <p className="setup-hint">Add custom words to the pool for this session.</p>
+                  <div className="setup-add-row">
+                    <input
+                      id="wordInput"
+                      className="setting-input"
+                      value={wordInput}
+                      onChange={(event) => setWordInput(event.target.value)}
+                      placeholder="Word (e.g. odyssey)"
+                    />
+                  </div>
+                  <div className="setup-add-row">
+                    <input
+                      className="setting-input"
+                      value={wordCategoryInput}
+                      onChange={(event) => setWordCategoryInput(event.target.value)}
+                      placeholder="Categories: mythology, travel"
+                    />
+                    <button className="btn" type="button" onClick={addWord}>Add word</button>
+                  </div>
+                  <div className="setup-word-list">
+                    <p className="setup-list-label">Recent words ({wordPool.length} total)</p>
+                    <div className="setup-word-chips">
+                      {wordPool.slice(-20).reverse().map((wordEntry, index) => (
+                        <span key={`${wordEntry.value}-${index}`} className="word-pill">
+                          {wordEntry.value}
+                          <span className="word-pill-cat">{wordEntry.categories[0]}</span>
+                        </span>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                </div>
+              )}
+
+              {/* RULES TAB */}
+              {setupTab === "rules" && (
+                <div className="setup-tab-pane">
+                  <div className="rules-grid">
+                    <div className="rule-card">
+                      <label className="rule-label" htmlFor="difficultySelect">Difficulty</label>
+                      <select
+                        id="difficultySelect"
+                        className="setting-select"
+                        value={settings.difficulty}
+                        onChange={(event) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            difficulty: event.target.value as HangmanDifficulty,
+                          }))
+                        }
+                      >
+                        <option value="mixed">Mixed</option>
+                        <option value="easy">Easy (≤6 letters)</option>
+                        <option value="medium">Medium (7–9)</option>
+                        <option value="hard">Hard (10+)</option>
+                      </select>
+                    </div>
+                    <div className="rule-card">
+                      <label className="rule-label" htmlFor="maxWrongSelect">Max wrong guesses</label>
+                      <select
+                        id="maxWrongSelect"
+                        className="setting-select"
+                        value={settings.maxWrong}
+                        onChange={(event) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            maxWrong: Number(event.target.value),
+                          }))
+                        }
+                      >
+                        {[5, 6, 7, 8, 9].map((n) => (
+                          <option key={n} value={n}>{n} mistakes</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="rule-card rule-card-wide">
+                      <label className="switch-field">
+                        <input
+                          type="checkbox"
+                          checked={settings.revealCategoryHints}
+                          onChange={(event) =>
+                            setSettings((prev) => ({
+                              ...prev,
+                              revealCategoryHints: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span>Show category hints during play</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="settings-row">
-              <label className="settings-label" htmlFor="addCategoryInput">
-                Add category
-              </label>
-              <input
-                id="addCategoryInput"
-                className="setting-input"
-                value={categoryInput}
-                onChange={(event) => setCategoryInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") addCategory();
-                }}
-                placeholder="e.g. mythology"
-              />
-              <button className="btn btn-secondary" type="button" onClick={addCategory}>
-                Add
-              </button>
-            </div>
-            <div className="settings-row">
-              <label className="settings-label" htmlFor="wordInput">
-                Add word
-              </label>
-              <input
-                id="wordInput"
-                className="setting-input"
-                value={wordInput}
-                onChange={(event) => setWordInput(event.target.value)}
-                placeholder="e.g. odyssey"
-              />
-              <input
-                className="setting-input"
-                value={wordCategoryInput}
-                onChange={(event) => setWordCategoryInput(event.target.value)}
-                placeholder="categories: mythology, travel"
-              />
-              <button className="btn" type="button" onClick={addWord}>
-                Add word
-              </button>
-            </div>
-            <div className="settings-row">
-              <label className="settings-label" htmlFor="difficultySelect">
-                Difficulty
-              </label>
-              <select
-                id="difficultySelect"
-                className="setting-select"
-                value={settings.difficulty}
-                onChange={(event) =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    difficulty: event.target.value as HangmanDifficulty,
-                  }))
-                }
-              >
-                <option value="mixed">Mixed</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-            <div className="settings-row">
-              <label className="settings-label" htmlFor="maxWrongSelect">
-                Max wrong attempts
-              </label>
-              <select
-                id="maxWrongSelect"
-                className="setting-select"
-                value={settings.maxWrong}
-                onChange={(event) =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    maxWrong: Number(event.target.value),
-                  }))
-                }
-              >
-                {[5, 6, 7, 8, 9].map((attemptCount) => (
-                  <option key={attemptCount} value={attemptCount}>
-                    {attemptCount}
-                  </option>
-                ))}
-              </select>
-              <label className="switch-field">
-                <input
-                  type="checkbox"
-                  checked={settings.revealCategoryHints}
-                  onChange={(event) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      revealCategoryHints: event.target.checked,
-                    }))
-                  }
-                />
-                <span>Show category hints</span>
-              </label>
-            </div>
-            <div className="setup-list">
-              <h4>Word list</h4>
-              <ul>
-                {wordPool.slice(-14).reverse().map((wordEntry, index) => (
-                  <li key={`${wordEntry.value}-${index}`}>
-                    <strong>{wordEntry.value}</strong>{" "}
-                    <span>
-                      {wordEntry.categories.join(", ")} - {getWordDifficulty(wordEntry.value)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+
+            {/* Footer */}
+            <div className="setup-modal-footer">
+              {phase === "idle" ? (
+                <button className="btn btn-block" onClick={() => { restart(); setPhase("playing"); setIsSetupOpen(false); }}>
+                  Start Game
+                </button>
+              ) : (
+                <button className="btn btn-block" onClick={() => { restart(); setIsSetupOpen(false); }}>
+                  Apply &amp; New Word
+                </button>
+              )}
             </div>
           </section>
         </div>
       ) : null}
-      <section
-        className={`hangman-scene ${dangerProgress > 0.7 ? "hangman-scene-critical" : ""}`}
-        aria-label="Tunnel danger meter"
-      >
-        <img className="scene-image" src={sceneImage} alt={`Hangman danger stage ${sceneStage + 1}`} />
-        <div className="scene-overlay" style={{ opacity: `${0.15 + dangerProgress * 0.65}` }} />
-        <div className="scene-stage">
-          {isLost ? "Fell into the tunnel!" : `Danger ${Math.round(dangerProgress * 100)}%`}
-        </div>
-      </section>
-      <div className="hangman-word" aria-live="polite">
-        {maskedWord}
-      </div>
-      {settings.revealCategoryHints ? (
-        <p className="category-hints">Categories: {entry.categories.join(", ")}</p>
+
+      {/* Game board — only shown while playing */}
+      {phase === "playing" ? (
+        <>
+          <HangmanDrawing
+            wrongCount={wrongCount}
+            maxWrong={settings.maxWrong}
+            isLost={isLost}
+            isWon={isWon}
+            shaking={lastGuessResult?.correct === false}
+          />
+          <div className="hangman-word" aria-live="polite">
+            {maskedWord}
+          </div>
+          {settings.revealCategoryHints ? (
+            <p className="category-hints">Categories: {entry.categories.join(", ")}</p>
+          ) : null}
+          <p className="status" role="status">
+            {isWon && "You won. Great guessing."}
+            {isLost && `Game over. The word was "${entry.value}".`}
+            {!isGameOver && "Keep guessing letters."}
+          </p>
+          <div className="letter-grid">
+            {ALPHABET.map((letter) => {
+              const used = guesses.has(letter);
+              const result = lastGuessResult?.letter === letter ? lastGuessResult : null;
+              return (
+                <button
+                  key={letter}
+                  className={`key-btn${result?.correct === false ? " key-btn-wrong" : ""}${result?.correct === true ? " key-btn-correct" : ""}`}
+                  onClick={() => onGuess(letter)}
+                  disabled={used || isGameOver}
+                  aria-label={`Guess ${letter}`}
+                >
+                  {letter.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        </>
       ) : null}
-      <p className="status" role="status">
-        {isWon && "You won. Great guessing."}
-        {isLost && `Game over. The word was "${entry.value}".`}
-        {!isGameOver && "Keep guessing letters."}
-      </p>
-      <div className="letter-grid">
-        {ALPHABET.map((letter) => {
-          const used = guesses.has(letter);
-          return (
-            <button
-              key={letter}
-              className="key-btn"
-              onClick={() => onGuess(letter)}
-              disabled={used || isGameOver}
-              aria-label={`Guess ${letter}`}
-            >
-              {letter.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
     </GameLayout>
   );
 }

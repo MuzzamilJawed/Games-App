@@ -71,6 +71,8 @@ const createPelletSet = () => {
 
 function PacmanGame() {
   const [settings, setSettings] = useState<PacmanSettings>(defaultSettings);
+  const [isSetupOpen, setIsSetupOpen] = useState<boolean>(true);
+  const [phase, setPhase] = useState<"idle" | "playing">("idle");
   const [player, setPlayer] = useState<Position>(START_PLAYER);
   const [direction, setDirection] = useState<Direction>("right");
   const [ghosts, setGhosts] = useState<Position[]>(START_GHOSTS.slice(0, defaultSettings.ghostCount));
@@ -207,77 +209,83 @@ function PacmanGame() {
         </>
       }
       actions={
-        <>
-          <button className="btn" onClick={() => setIsPaused((prev) => !prev)} disabled={isGameOver}>
-            {isPaused ? "Resume" : "Pause"}
-          </button>
-          <button className="btn" onClick={restart}>
-            Restart game
-          </button>
-        </>
+        phase === "idle" ? null : (
+          <>
+            <button className="btn" onClick={() => setIsPaused((prev) => !prev)} disabled={isGameOver}>
+              {isPaused ? "Resume" : "Pause"}
+            </button>
+            <button className="btn" onClick={restart}>Restart</button>
+            <button className="btn btn-secondary" style={{ opacity: 0.7, fontSize: "0.8rem", padding: "0.35rem 0.7rem" }} onClick={() => setIsSetupOpen(true)}>Setup</button>
+          </>
+        )
       }
     >
-      <section className="settings-panel" aria-label="Pacman settings">
-        <div className="settings-row">
-          <label className="settings-label" htmlFor="playerSpeedSelect">
-            Player speed
-          </label>
-          <select
-            id="playerSpeedSelect"
-            className="setting-select"
-            value={settings.playerSpeed}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                playerSpeed: Number(event.target.value),
-              }))
-            }
-          >
-            <option value={180}>Calm</option>
-            <option value={140}>Standard</option>
-            <option value={110}>Fast</option>
-          </select>
+      {/* Setup modal */}
+      {isSetupOpen ? (
+        <div className="modal-backdrop" onClick={() => { if (phase !== "idle") setIsSetupOpen(false); }} role="presentation">
+          <section className="setup-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="setup-modal-head">
+              <h3>Game Setup</h3>
+              {phase !== "idle" && (
+                <button className="close-btn" onClick={() => setIsSetupOpen(false)} aria-label="Close">✕</button>
+              )}
+            </div>
+            <div className="setup-tab-content">
+              <div className="setup-tab-pane">
+                <p className="setup-hint">Adjust difficulty, then start the game.</p>
+                <div className="settings-row">
+                  <label className="settings-label" htmlFor="pm-playerSpeed">Player speed</label>
+                  <select id="pm-playerSpeed" className="setting-select" value={settings.playerSpeed}
+                    onChange={(e) => setSettings((p) => ({ ...p, playerSpeed: Number(e.target.value) }))}>
+                    <option value={180}>Calm</option>
+                    <option value={140}>Standard</option>
+                    <option value={110}>Fast</option>
+                  </select>
+                </div>
+                <div className="settings-row">
+                  <label className="settings-label" htmlFor="pm-ghostSpeed">Ghost speed</label>
+                  <select id="pm-ghostSpeed" className="setting-select" value={settings.ghostSpeed}
+                    onChange={(e) => setSettings((p) => ({ ...p, ghostSpeed: Number(e.target.value) }))}>
+                    <option value={380}>Easy</option>
+                    <option value={320}>Medium</option>
+                    <option value={250}>Hard</option>
+                  </select>
+                </div>
+                <div className="settings-row">
+                  <label className="settings-label" htmlFor="pm-ghostCount">Ghost count</label>
+                  <select id="pm-ghostCount" className="setting-select" value={settings.ghostCount}
+                    onChange={(e) => setSettings((p) => ({ ...p, ghostCount: Number(e.target.value) }))}>
+                    <option value={1}>1 ghost</option>
+                    <option value={2}>2 ghosts</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="setup-modal-footer">
+              {phase === "idle" ? (
+                <button className="btn btn-block" onClick={() => { restart(); setPhase("playing"); setIsSetupOpen(false); }}>
+                  Start Game
+                </button>
+              ) : (
+                <button className="btn btn-block" onClick={() => { restart(); setIsSetupOpen(false); }}>
+                  Restart with Settings
+                </button>
+              )}
+            </div>
+          </section>
         </div>
-        <div className="settings-row">
-          <label className="settings-label" htmlFor="ghostSpeedSelect">
-            Ghost speed
-          </label>
-          <select
-            id="ghostSpeedSelect"
-            className="setting-select"
-            value={settings.ghostSpeed}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                ghostSpeed: Number(event.target.value),
-              }))
-            }
-          >
-            <option value={380}>Easy</option>
-            <option value={320}>Medium</option>
-            <option value={250}>Hard</option>
-          </select>
-        </div>
-        <div className="settings-row">
-          <label className="settings-label" htmlFor="ghostCountSelect">
-            Ghost count
-          </label>
-          <select
-            id="ghostCountSelect"
-            className="setting-select"
-            value={settings.ghostCount}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                ghostCount: Number(event.target.value),
-              }))
-            }
-          >
-            <option value={1}>1 ghost</option>
-            <option value={2}>2 ghosts</option>
-          </select>
-        </div>
-      </section>
+      ) : null}
+
+      {/* Idle screen */}
+      {phase === "idle" ? (
+        <section className="game-idle-view">
+          <div className="hero-icon">◎</div>
+          <h3>Ready to play Pacman?</h3>
+          <p>Use arrow keys (or on-screen buttons) to move. Collect all pellets and avoid the ghosts!</p>
+          <button className="btn btn-lg" onClick={() => setIsSetupOpen(true)}>Configure &amp; Play</button>
+        </section>
+      ) : (
+        <>
       <p className="status" role="status">
         {isWin && "You cleared the board. You win."}
         {isLose && "No lives left. Game over."}
@@ -312,6 +320,8 @@ function PacmanGame() {
           ↓
         </button>
       </div>
+        </>
+      )}
     </GameLayout>
   );
 }
