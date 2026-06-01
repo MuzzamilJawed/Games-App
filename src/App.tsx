@@ -52,9 +52,9 @@ function GamesDropdown() {
 function App() {
   const { settings, togglePin, toggleHide, reset } = useSettings();
 
-  const pinnedGames = GAMES
-    .filter((g) => settings.pinnedGames.includes(g.id))
-    .sort((a, b) => settings.pinnedGames.indexOf(a.id) - settings.pinnedGames.indexOf(b.id));
+  // const pinnedGames = GAMES
+  //   .filter((g) => settings.pinnedGames.includes(g.id))
+  //   .sort((a, b) => settings.pinnedGames.indexOf(a.id) - settings.pinnedGames.indexOf(b.id));
 
   const bottomLinks = [
     { to: "/", label: "Home", icon: "⊞", end: true },
