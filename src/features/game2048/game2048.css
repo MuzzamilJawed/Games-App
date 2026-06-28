@@ -1,0 +1,225 @@
+.g2048-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0.25rem 0;
+}
+
+/* ---------- Board ---------- */
+.g2048-board {
+  position: relative;
+  width: min(78vmin, 440px);
+  height: min(78vmin, 440px);
+  max-width: 100%;
+  padding: var(--board-gap, 2.5%);
+  box-sizing: border-box;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-md);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.g2048-grid,
+.g2048-tiles {
+  position: absolute;
+  inset: var(--board-gap, 2.5%);
+}
+
+.g2048-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 3%;
+}
+
+.g2048-cell {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md, 10px);
+  opacity: 0.55;
+}
+
+/* ---------- Tiles ---------- */
+.g2048-tiles {
+  pointer-events: none;
+}
+
+.g2048-tile {
+  --gap: 3%;
+  /* 4 tiles + 3 gaps span 100% => tile = (100% - 3*gap)/4 */
+  --tile-size: calc((100% - 3 * var(--gap)) / 4);
+  --step: calc(var(--tile-size) + var(--gap));
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  transform: translate(
+    calc(var(--col) * var(--step)),
+    calc(var(--row) * var(--step))
+  );
+  transition: transform var(--transition-fast, 0.12s) ease;
+  will-change: transform;
+}
+
+.g2048-tile-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md, 10px);
+  font-weight: 800;
+  font-size: clamp(0.95rem, 5.5vmin, 2rem);
+  line-height: 1;
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.g2048-tile {
+  transform-origin: top left;
+}
+
+/* Tile color scale — tuned for the dark-first theme, also fine on light */
+.g2048-v2 .g2048-tile-inner { background: #6b7a99; color: #fff; }
+.g2048-v4 .g2048-tile-inner { background: #5b6dc7; }
+.g2048-v8 .g2048-tile-inner { background: var(--blue, #4f7cff); }
+.g2048-v16 .g2048-tile-inner { background: #7a5cff; }
+.g2048-v32 .g2048-tile-inner { background: var(--purple, #9b5cff); }
+.g2048-v64 .g2048-tile-inner { background: #c44ccf; }
+.g2048-v128 .g2048-tile-inner { background: #e0568f; font-size: clamp(0.85rem, 4.8vmin, 1.7rem); }
+.g2048-v256 .g2048-tile-inner { background: var(--red, #ff5c6c); font-size: clamp(0.85rem, 4.8vmin, 1.7rem); }
+.g2048-v512 .g2048-tile-inner { background: #ff7a3d; font-size: clamp(0.85rem, 4.8vmin, 1.7rem); }
+.g2048-v1024 .g2048-tile-inner {
+  background: linear-gradient(135deg, #ffb024, #ff8a00);
+  font-size: clamp(0.7rem, 3.9vmin, 1.4rem);
+}
+.g2048-v2048 .g2048-tile-inner {
+  background: linear-gradient(135deg, var(--yellow, #ffcf3a), #ff9d00);
+  color: #1a1a2e;
+  font-size: clamp(0.7rem, 3.9vmin, 1.4rem);
+  box-shadow: 0 0 18px rgba(255, 200, 60, 0.6);
+}
+.g2048-vsuper .g2048-tile-inner {
+  background: linear-gradient(135deg, #1d976c, var(--green, #2ecc71));
+  font-size: clamp(0.65rem, 3.6vmin, 1.3rem);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.5);
+}
+
+/* ---------- Animations ---------- */
+@keyframes g2048-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.g2048-pop .g2048-tile-inner {
+  animation: g2048-pop 0.18s ease;
+}
+
+@keyframes g2048-bounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.g2048-bounce .g2048-tile-inner {
+  animation: g2048-bounce 0.16s ease;
+}
+
+/* ---------- On-screen controls ---------- */
+.g2048-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 2.4rem);
+  grid-template-rows: repeat(2, 2.4rem);
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.g2048-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-soft);
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.12s) ease,
+    color var(--transition-fast, 0.12s) ease;
+}
+.g2048-arrow:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-light);
+}
+.g2048-arrow:active {
+  transform: scale(0.92);
+}
+.g2048-arrow-up { grid-column: 2; grid-row: 1; }
+.g2048-arrow-left { grid-column: 1; grid-row: 2; }
+.g2048-arrow-down { grid-column: 2; grid-row: 2; }
+.g2048-arrow-right { grid-column: 3; grid-row: 2; }
+
+.g2048-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- Overlay ---------- */
+.g2048-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-primary) 78%, transparent);
+  backdrop-filter: blur(3px);
+  border-radius: var(--radius-lg, 16px);
+  z-index: 5;
+  animation: g2048-fade 0.2s ease;
+}
+@keyframes g2048-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.g2048-overlay-card {
+  text-align: center;
+  padding: 1.4rem 1.6rem;
+}
+.g2048-overlay-emoji {
+  font-size: 2.6rem;
+}
+.g2048-overlay-card h3 {
+  margin: 0.4rem 0 0.2rem;
+  color: var(--text-light);
+}
+.g2048-overlay-card p {
+  margin: 0 0 1rem;
+  color: var(--text-soft);
+}
+.g2048-overlay-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-height: 640px) {
+  .g2048-board {
+    width: min(62vmin, 360px);
+    height: min(62vmin, 360px);
+  }
+  .g2048-controls {
+    grid-template-columns: repeat(3, 2rem);
+    grid-template-rows: repeat(2, 2rem);
+  }
+}

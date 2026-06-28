@@ -1,0 +1,193 @@
+/* Word Search */
+
+.ws-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5vw, 1.75rem);
+  padding: 0.25rem;
+  overflow: hidden;
+}
+
+.ws-board-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ws-grid {
+  display: grid;
+  width: min(72vmin, 460px);
+  height: min(72vmin, 460px);
+  gap: clamp(1px, 0.4vmin, 4px);
+  padding: clamp(4px, 1vmin, 10px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ws-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  font-weight: 700;
+  font-size: clamp(0.6rem, 3.4vmin, 1.05rem);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.ws-cell-sel {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  transform: scale(1.04);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.55);
+}
+
+.ws-cell-found {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.ws-cell-found.ws-cell-sel {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.ws-grid-won .ws-cell-found {
+  animation: ws-pop 0.4s ease;
+}
+
+@keyframes ws-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.ws-win-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: rgba(34, 197, 94, 0.14);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-lg);
+  color: var(--text-light);
+  font-weight: 800;
+  font-size: clamp(0.95rem, 2.6vmin, 1.3rem);
+  pointer-events: none;
+}
+
+.ws-win-emoji { font-size: clamp(2rem, 7vmin, 3rem); }
+
+/* Word list */
+.ws-words {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-self: center;
+}
+
+.ws-words-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.ws-words-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ws-word-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-soft);
+  font-weight: 700;
+  font-size: clamp(0.65rem, 1.6vmin, 0.82rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: all var(--transition-fast);
+}
+
+.ws-word-found {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: var(--green);
+  color: var(--green);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  opacity: 0.85;
+}
+
+.ws-setup-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+/* Narrow screens: word list moves below the grid as a compact wrapped row. */
+@media (max-width: 720px) {
+  .ws-stage {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .ws-words {
+    max-width: min(72vmin, 460px);
+    width: 100%;
+    flex: 0 0 auto;
+    align-items: center;
+    text-align: center;
+  }
+  .ws-words-list { justify-content: center; }
+}
+
+/* Short / very small heights: shrink the board further so nothing scrolls. */
+@media (max-height: 620px) {
+  .ws-grid,
+  .ws-board-wrap {
+    width: min(52vmin, 360px);
+    height: min(52vmin, 360px);
+  }
+  .ws-grid { width: min(52vmin, 360px); height: min(52vmin, 360px); }
+}
+
+@media (max-width: 360px) {
+  .ws-grid,
+  .ws-board-wrap {
+    width: min(88vw, 320px);
+    height: min(88vw, 320px);
+  }
+  .ws-grid { width: min(88vw, 320px); height: min(88vw, 320px); }
+}

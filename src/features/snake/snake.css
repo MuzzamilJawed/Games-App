@@ -1,0 +1,208 @@
+/* ============================================================
+   SNAKE GAME
+   ============================================================ */
+
+.snk-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.snk-stage {
+  position: relative;
+  width: min(70vmin, 440px);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.snk-board {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: var(--radius-lg, 14px);
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--green) 9%, transparent), transparent 60%),
+    var(--bg-tertiary, #0f172a);
+  border: 1px solid var(--border-strong, var(--border-color));
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.25));
+}
+
+:root[data-theme="light"] .snk-board {
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--green) 14%, transparent), transparent 60%),
+    var(--bg-secondary, #e2e8f0);
+}
+
+.snk-cell {
+  position: relative;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.snk-empty {
+  background: color-mix(in srgb, var(--text-muted, #64748b) 8%, transparent);
+}
+
+:root[data-theme="light"] .snk-empty {
+  background: color-mix(in srgb, var(--text-muted, #64748b) 12%, transparent);
+}
+
+/* Snake body — rounded segments */
+.snk-body {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--green) 88%, white 12%),
+    var(--green)
+  );
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+/* Glowing head */
+.snk-head {
+  background: radial-gradient(
+    circle at 35% 35%,
+    color-mix(in srgb, var(--green) 60%, white 40%),
+    var(--green)
+  );
+  border-radius: 7px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--green) 50%, transparent),
+    0 0 10px color-mix(in srgb, var(--green) 70%, transparent),
+    0 0 18px color-mix(in srgb, var(--green) 45%, transparent);
+  z-index: 2;
+}
+
+.snk-eyes {
+  width: 60%;
+  height: 22%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.snk-eyes::before,
+.snk-eyes::after {
+  content: "";
+  width: 28%;
+  height: 100%;
+  background: var(--bg-primary, #0b1220);
+  border-radius: 50%;
+}
+.snk-eyes::before { margin-left: 8%; }
+.snk-eyes::after { margin-right: 8%; }
+
+/* Food with pulse */
+.snk-food {
+  background: transparent;
+}
+.snk-food-dot {
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--yellow), var(--red));
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--red) 70%, transparent),
+    0 0 14px color-mix(in srgb, var(--yellow) 40%, transparent);
+  animation: snk-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes snk-pulse {
+  0%, 100% { transform: scale(0.82); opacity: 0.85; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+/* Game over overlay */
+.snk-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-primary, #0b1220) 72%, transparent);
+  backdrop-filter: blur(3px);
+  border-radius: var(--radius-lg, 14px);
+  z-index: 5;
+  animation: snk-fade 0.25s ease;
+}
+
+@keyframes snk-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.snk-overlay-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1.75rem;
+  text-align: center;
+  background: var(--bg-card, #111827);
+  border: 1px solid var(--border-strong, var(--border-color));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-lg, 0 16px 40px rgba(0, 0, 0, 0.4));
+  max-width: 88%;
+}
+
+.snk-overlay-card h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-light, #f1f5f9);
+}
+
+.snk-final-score {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.snk-newbest {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--yellow);
+  letter-spacing: 0.03em;
+}
+
+.snk-best-line {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.snk-overlay-card .btn {
+  margin-top: 0.4rem;
+}
+
+/* Snake-specific D-pad layout: arrows in a tidy cluster */
+.snk-play .control-pad-middle {
+  gap: 0.45rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .snk-stage {
+    width: min(62vmin, 360px);
+  }
+  .snk-play .control-pad .key-btn {
+    min-width: 52px;
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 380px) {
+  .snk-stage {
+    width: min(58vmin, 300px);
+  }
+}

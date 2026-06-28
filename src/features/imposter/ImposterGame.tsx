@@ -53,6 +53,7 @@ function ImposterGame() {
   const [isCardRevealed, setIsCardRevealed] = useState<boolean>(false);
   const [phase, setPhase] = useState<"idle" | "reveal" | "summary">("idle");
   const [firstSpeaker, setFirstSpeaker] = useState<string>("");
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
   // Custom Categories and Words
   const [customWords, setCustomWords] = useState<Record<string, string[]>>(() => {
@@ -70,8 +71,6 @@ function ImposterGame() {
 
   const allWords = useMemo(() => ({ ...IMPOSTER_WORDS, ...customWords }), [customWords]);
   const allCategories = useMemo(() => Object.keys(allWords), [allWords]);
-
-  const imposterCount = useMemo(() => roles.filter((player) => player.isImposter).length, [roles]);
 
   const startRound = (roundToStart = 1) => {
     if (setup.categories.length === 0) {
@@ -95,17 +94,23 @@ function ImposterGame() {
     setCurrentRound(roundToStart);
     setCurrentPlayerIndex(0);
     setIsCardRevealed(false);
+    setShowAnswer(false);
     setPhase("reveal");
     setIsSetupOpen(false);
   };
 
   const advancePlayer = () => {
+    // First flip the card back with animation
     setIsCardRevealed(false);
-    if (currentPlayerIndex + 1 >= roles.length) {
-      setPhase("summary");
-      return;
-    }
-    setCurrentPlayerIndex((prev) => prev + 1);
+    
+    // Wait for card flip animation to complete before changing player
+    setTimeout(() => {
+      if (currentPlayerIndex + 1 >= roles.length) {
+        setPhase("summary");
+        return;
+      }
+      setCurrentPlayerIndex((prev) => prev + 1);
+    }, 300); // Match the card flip animation duration
   };
 
   const nextRound = () => {
@@ -207,7 +212,7 @@ function ImposterGame() {
       }
     >
       <div className="imposter-game-container">
-        {phase !== "idle" ? (
+        {phase === "idle" ? (
           <div className="imp-game-toolbar">
             <button className="imp-toolbar-btn" onClick={() => startRound(1)}>↺ New Game</button>
             <button className="imp-toolbar-btn imp-toolbar-btn-ghost" onClick={() => setIsSetupOpen(true)}>⚙ Setup</button>
@@ -283,20 +288,13 @@ function ImposterGame() {
               <span className="speaker-name">{firstSpeaker}</span>
             </div>
 
-            <div className="summary-info-cards">
-              <div className="info-card">
-                <span className="info-label">Selected Categories</span>
-                <div className="info-chips">
-                  {setup.categories.map(c => <span key={c} className="chip">{c}</span>)}
-                </div>
-              </div>
-              <div className="info-card">
-                <span className="info-label">Active Imposters</span>
-                <span className="info-value">{imposterCount}</span>
-              </div>
-            </div>
-
             <div className="summary-actions">
+              <button 
+                className="btn"
+                onClick={() => setShowAnswer(!showAnswer)}
+              >
+                🔍 Reveal Answer
+              </button>
               <button className="btn btn-secondary" onClick={() => setIsSetupOpen(true)}>
                 Change Settings
               </button>
@@ -464,6 +462,40 @@ function ImposterGame() {
             <div className="setup-modal-footer">
               <button className="btn btn-block" onClick={() => startRound(1)}>
                 Start Game
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {showAnswer ? (
+        <div className="modal-backdrop" onClick={() => setShowAnswer(false)} role="presentation">
+          <section className="setup-modal answer-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="setup-modal-head">
+              <h3>🔍 Game Answer</h3>
+              <button className="close-btn" onClick={() => setShowAnswer(false)} aria-label="Close">✕</button>
+            </div>
+            <div className="setup-tab-content answer-modal-content">
+              <div className="answer-reveal-card">
+                <div className="answer-item">
+                  <span className="answer-label">Imposter(s):</span>
+                  <span className="answer-value">
+                    {roles.filter(r => r.isImposter).map(r => r.name).join(", ")}
+                  </span>
+                </div>
+                <div className="answer-item">
+                  <span className="answer-label">Secret Word:</span>
+                  <span className="answer-value">{secretWord}</span>
+                </div>
+                <div className="answer-item">
+                  <span className="answer-label">Category:</span>
+                  <span className="answer-value">{selectedCategory}</span>
+                </div>
+              </div>
+            </div>
+            <div className="setup-modal-footer">
+              <button className="btn btn-block" onClick={() => setShowAnswer(false)}>
+                Close
               </button>
             </div>
           </section>

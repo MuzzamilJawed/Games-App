@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import GameLayout from "../../components/GameLayout";
+import DifficultySlider from "../../components/DifficultySlider";
 
 type Position = { row: number; col: number };
 type Direction = "up" | "down" | "left" | "right";
@@ -46,6 +47,24 @@ const defaultSettings: PacmanSettings = {
   playerSpeed: 140,
   ghostSpeed: 320,
   ghostCount: 2,
+};
+
+/** Difficulty presets (Easy → Hard) that map to the speed/ghost settings. */
+const PAC_DIFFICULTIES = {
+  Easy: { playerSpeed: 180, ghostSpeed: 380, ghostCount: 1 },
+  Medium: { playerSpeed: 140, ghostSpeed: 320, ghostCount: 2 },
+  Hard: { playerSpeed: 110, ghostSpeed: 250, ghostCount: 2 },
+} as const;
+type PacDifficulty = keyof typeof PAC_DIFFICULTIES;
+
+const difficultyOf = (s: PacmanSettings): PacDifficulty => {
+  const match = (Object.keys(PAC_DIFFICULTIES) as PacDifficulty[]).find(
+    (k) =>
+      PAC_DIFFICULTIES[k].playerSpeed === s.playerSpeed &&
+      PAC_DIFFICULTIES[k].ghostSpeed === s.ghostSpeed &&
+      PAC_DIFFICULTIES[k].ghostCount === s.ghostCount
+  );
+  return match ?? "Medium";
 };
 
 const keyOf = (position: Position) => `${position.row}:${position.col}`;
@@ -232,33 +251,12 @@ function PacmanGame() {
             </div>
             <div className="setup-tab-content">
               <div className="setup-tab-pane">
-                <p className="setup-hint">Adjust difficulty, then start the game.</p>
-                <div className="settings-row">
-                  <label className="settings-label" htmlFor="pm-playerSpeed">Player speed</label>
-                  <select id="pm-playerSpeed" className="setting-select" value={settings.playerSpeed}
-                    onChange={(e) => setSettings((p) => ({ ...p, playerSpeed: Number(e.target.value) }))}>
-                    <option value={180}>Calm</option>
-                    <option value={140}>Standard</option>
-                    <option value={110}>Fast</option>
-                  </select>
-                </div>
-                <div className="settings-row">
-                  <label className="settings-label" htmlFor="pm-ghostSpeed">Ghost speed</label>
-                  <select id="pm-ghostSpeed" className="setting-select" value={settings.ghostSpeed}
-                    onChange={(e) => setSettings((p) => ({ ...p, ghostSpeed: Number(e.target.value) }))}>
-                    <option value={380}>Easy</option>
-                    <option value={320}>Medium</option>
-                    <option value={250}>Hard</option>
-                  </select>
-                </div>
-                <div className="settings-row">
-                  <label className="settings-label" htmlFor="pm-ghostCount">Ghost count</label>
-                  <select id="pm-ghostCount" className="setting-select" value={settings.ghostCount}
-                    onChange={(e) => setSettings((p) => ({ ...p, ghostCount: Number(e.target.value) }))}>
-                    <option value={1}>1 ghost</option>
-                    <option value={2}>2 ghosts</option>
-                  </select>
-                </div>
+                <p className="setup-hint">Slide to set the difficulty, then start the game.</p>
+                <DifficultySlider
+                  options={["Easy", "Medium", "Hard"]}
+                  value={difficultyOf(settings)}
+                  onChange={(v) => setSettings(PAC_DIFFICULTIES[v as PacDifficulty])}
+                />
               </div>
             </div>
             <div className="setup-modal-footer">

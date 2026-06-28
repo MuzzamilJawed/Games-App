@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import GameLayout from "../../components/GameLayout";
+import DifficultySlider from "../../components/DifficultySlider";
 import { HANGMAN_CATEGORIES, HANGMAN_WORDS, HangmanDifficulty, HangmanWordEntry } from "./words";
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
@@ -398,23 +399,22 @@ function HangmanGame() {
                 <div className="setup-tab-pane">
                   <div className="rules-grid">
                     <div className="rule-card">
-                      <label className="rule-label" htmlFor="difficultySelect">Difficulty</label>
-                      <select
-                        id="difficultySelect"
-                        className="setting-select"
+                      <DifficultySlider
+                        options={["easy", "medium", "hard", "mixed"]}
                         value={settings.difficulty}
-                        onChange={(event) =>
+                        onChange={(v) =>
                           setSettings((prev) => ({
                             ...prev,
-                            difficulty: event.target.value as HangmanDifficulty,
+                            difficulty: v as HangmanDifficulty,
                           }))
                         }
-                      >
-                        <option value="mixed">Mixed</option>
-                        <option value="easy">Easy (≤6 letters)</option>
-                        <option value="medium">Medium (7–9)</option>
-                        <option value="hard">Hard (10+)</option>
-                      </select>
+                        labels={{
+                          easy: "Easy",
+                          medium: "Medium",
+                          hard: "Hard",
+                          mixed: "Mixed",
+                        }}
+                      />
                     </div>
                     <div className="rule-card">
                       <label className="rule-label" htmlFor="maxWrongSelect">Max wrong guesses</label>

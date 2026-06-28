@@ -1,0 +1,222 @@
+.sdk-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.sdk-play .status {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  min-height: 1.1em;
+}
+
+.sdk-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* The board: a square that scales to the viewport */
+.sdk-grid {
+  --sdk-size: min(70vmin, 430px);
+  width: var(--sdk-size);
+  height: var(--sdk-size);
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  background: var(--border-strong, var(--border-color));
+  border: 2px solid var(--border-strong, var(--border-color));
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  gap: 1px;
+}
+
+.sdk-locked {
+  opacity: 0.7;
+}
+
+.sdk-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  color: var(--text-light);
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: clamp(0.85rem, 4.4vmin, 1.55rem);
+  line-height: 1;
+  transition: background var(--transition-fast, 0.12s ease),
+    color var(--transition-fast, 0.12s ease);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.sdk-cell:disabled {
+  cursor: default;
+}
+
+/* Thicker borders between 3x3 boxes */
+.sdk-cell.sdk-bx {
+  box-shadow: inset -2px 0 0 0 var(--border-strong, var(--border-color));
+}
+.sdk-cell.sdk-by {
+  box-shadow: inset 0 -2px 0 0 var(--border-strong, var(--border-color));
+}
+.sdk-cell.sdk-bx.sdk-by {
+  box-shadow: inset -2px 0 0 0 var(--border-strong, var(--border-color)),
+    inset 0 -2px 0 0 var(--border-strong, var(--border-color));
+}
+
+/* Given (clue) cells: bolder, dimmer background */
+.sdk-given {
+  font-weight: 800;
+  color: var(--text-light);
+  background: var(--bg-tertiary);
+}
+
+.sdk-user {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* Peer highlight (same row/col/box) */
+.sdk-peer {
+  background: color-mix(in srgb, var(--blue) 12%, var(--bg-card));
+}
+.sdk-given.sdk-peer {
+  background: color-mix(in srgb, var(--blue) 14%, var(--bg-tertiary));
+}
+
+/* Matching digits */
+.sdk-match {
+  background: color-mix(in srgb, var(--purple) 22%, var(--bg-card));
+  color: var(--purple);
+}
+
+/* Selected cell */
+.sdk-selected {
+  background: color-mix(in srgb, var(--blue) 32%, var(--bg-card));
+  color: var(--text-light);
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+.sdk-given.sdk-selected {
+  color: var(--text-light);
+}
+
+/* Conflicts */
+.sdk-conflict {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 18%, var(--bg-card));
+}
+.sdk-conflict.sdk-selected {
+  box-shadow: inset 0 0 0 2px var(--red);
+}
+
+@media (hover: hover) {
+  .sdk-cell:not(:disabled):hover {
+    background: color-mix(in srgb, var(--blue) 18%, var(--bg-card));
+  }
+}
+
+/* Number pad */
+.sdk-pad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+  width: min(70vmin, 430px);
+  max-width: 100%;
+}
+
+.sdk-key {
+  min-height: 40px;
+  height: clamp(40px, 7vmin, 52px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  font-size: clamp(1rem, 3.4vmin, 1.3rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.12s ease),
+    transform var(--transition-fast, 0.12s ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sdk-key:not(:disabled):hover {
+  background: color-mix(in srgb, var(--blue) 22%, var(--bg-tertiary));
+}
+.sdk-key:not(:disabled):active {
+  transform: scale(0.94);
+}
+.sdk-key:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sdk-erase {
+  color: var(--red);
+}
+
+/* Win celebration */
+.sdk-win .sdk-grid {
+  animation: sdk-pop 0.5s ease;
+  box-shadow: 0 0 0 3px var(--green), var(--shadow-md);
+}
+
+@keyframes sdk-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Wide screens: place pad beside the board */
+@media (min-width: 760px) and (min-height: 520px) {
+  .sdk-play {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: center;
+  }
+  .sdk-play .status {
+    flex-basis: 100%;
+  }
+  .sdk-pad {
+    width: auto;
+    grid-template-columns: repeat(3, 1fr);
+    align-self: center;
+  }
+  .sdk-pad .sdk-key {
+    width: clamp(44px, 6vmin, 58px);
+  }
+}
+
+/* Short viewports: shrink board so the pad always fits */
+@media (max-height: 620px) {
+  .sdk-grid {
+    --sdk-size: min(56vmin, 360px);
+  }
+  .sdk-pad {
+    width: min(56vmin, 360px);
+  }
+}
